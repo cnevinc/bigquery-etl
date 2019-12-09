@@ -55,6 +55,7 @@ SELECT
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type,
   SUM(count) AS total_users,
@@ -79,6 +80,7 @@ GROUP BY
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type
 
@@ -92,6 +94,7 @@ SELECT
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type,
   SUM(count) AS total_users,
@@ -115,6 +118,7 @@ GROUP BY
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type
 
@@ -128,6 +132,7 @@ SELECT
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type,
   SUM(count) AS total_users,
@@ -151,6 +156,7 @@ GROUP BY
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type
 
@@ -164,6 +170,7 @@ SELECT
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type,
   SUM(count) AS total_users,
@@ -187,6 +194,7 @@ GROUP BY
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type
 
@@ -200,6 +208,7 @@ SELECT
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type,
   SUM(count) AS total_users,
@@ -222,6 +231,7 @@ GROUP BY
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type
 
@@ -235,6 +245,7 @@ SELECT
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type,
   SUM(count) AS total_users,
@@ -257,6 +268,7 @@ GROUP BY
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type
 
@@ -270,6 +282,7 @@ SELECT
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type,
   SUM(count) AS total_users,
@@ -291,6 +304,7 @@ GROUP BY
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type
 
@@ -304,6 +318,7 @@ SELECT
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type,
   SUM(count) AS total_users,
@@ -325,6 +340,7 @@ GROUP BY
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type
 
@@ -338,6 +354,7 @@ SELECT
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type,
   SUM(count) AS total_users,
@@ -359,6 +376,7 @@ GROUP BY
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type
 
@@ -372,6 +390,7 @@ SELECT
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type,
   SUM(count) AS total_users,
@@ -392,5 +411,6 @@ GROUP BY
   metric,
   metric_type,
   key,
+  process,
   client_agg_type,
   agg_type
