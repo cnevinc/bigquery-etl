@@ -19,6 +19,7 @@ CREATE TEMP FUNCTION udf_merged_user_data(old_aggs ANY TYPE, new_aggs ANY TYPE)
     metric STRING,
     metric_type STRING,
     key STRING,
+    process STRING,
     agg_type STRING,
     aggregates ARRAY<STRUCT<key STRING, value INT64>>>> AS (
   (
@@ -40,6 +41,7 @@ CREATE TEMP FUNCTION udf_merged_user_data(old_aggs ANY TYPE, new_aggs ANY TYPE)
         metric,
         metric_type,
         key,
+        process,
         agg_type,
         udf_map_sum(ARRAY_CONCAT_AGG(aggregates)) AS histogram_aggregates
       FROM unnested
@@ -51,6 +53,7 @@ CREATE TEMP FUNCTION udf_merged_user_data(old_aggs ANY TYPE, new_aggs ANY TYPE)
         metric,
         metric_type,
         key,
+        process,
         agg_type)
 
       SELECT ARRAY_AGG((
@@ -61,6 +64,7 @@ CREATE TEMP FUNCTION udf_merged_user_data(old_aggs ANY TYPE, new_aggs ANY TYPE)
         metric,
         metric_type,
         key,
+        process,
         agg_type,
         histogram_aggregates))
       FROM aggregated_data
@@ -84,6 +88,7 @@ filtered_aggregates AS (
     metric,
     metric_type,
     key,
+    process,
     agg_type,
     value
   FROM filtered_date_channel
@@ -108,6 +113,7 @@ version_filtered_new AS
       metric,
       metric_type,
       key,
+      process,
       agg_type,
       latest_version,
       hist_aggs.value AS value
@@ -130,6 +136,7 @@ aggregated_histograms AS
       metric,
       metric_type,
       key,
+      process,
       agg_type,
       udf_map_sum(ARRAY_CONCAT_AGG(value)) AS aggregates
   FROM
@@ -146,6 +153,7 @@ aggregated_histograms AS
       metric,
       metric_type,
       key,
+      process,
       agg_type,
       latest_version),
 
@@ -164,6 +172,7 @@ clients_histogram_aggregates_new AS
       metric STRING,
       metric_type STRING,
       key STRING,
+      process STRING,
       agg_type STRING,
       aggregates ARRAY<STRUCT<key STRING, value INT64>>>(
         first_bucket,
@@ -173,6 +182,7 @@ clients_histogram_aggregates_new AS
         metric,
         metric_type,
         key,
+        process,
         agg_type,
         aggregates
   )) AS histogram_aggregates
