@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import os
+import csv
 import json
+import os
 from argparse import ArgumentParser
 
 from google.cloud import bigquery
@@ -9,6 +10,13 @@ from google.cloud import bigquery
 DATA_FILENAME = "data.csv"
 SCHEMA_FILENAME = "schema.json"
 DESCRIPTION_FILENAME = "description.txt"
+
+UDF_TEMPLATE = """CREATE TEMP FUNCTION udf_static_{table_name}() AS (
+  ARRAY<STRUCT<{schema}>>[
+    {rows}
+  ]
+);
+"""
 
 
 def parse_args():
@@ -18,19 +26,31 @@ def parse_args():
         default="templates/",
         help="Path containing CSV's containing static data",
     )
+    parser.add_argument(
+        "--udf-dir",
+        default="udf/",
+        help="Path to save generated UDFs at",
+    )
     parser.add_argument("--project-id", help="Project to publish tables to")
     return parser.parse_args()
 
 
-def load_table(
-    data_file_path, schema_file_path=None, description_file_path=None, project=None
-):
-    client = bigquery.Client()
-
-    # Assume path is .../dataset/table/data.csv
+# Get dataset and table id from data file path
+# Assume path is .../dataset/table/data.csv
+def parse_data_file_path(data_file_path):
     path_split = os.path.normcase(data_file_path).split("/")
     dataset_id = path_split[-3]
     table_id = path_split[-2]
+    return dataset_id, table_id
+
+
+def load_table(
+    data_file_path, udf_dir, schema_file_path=None,
+    description_file_path=None, project=None
+):
+    client = bigquery.Client()
+
+    dataset_id, table_id = parse_data_file_path(data_file_path)
     dataset_ref = client.dataset(dataset_id, project=project)
     table_ref = dataset_ref.table(table_id)
 
@@ -39,10 +59,12 @@ def load_table(
         skip_leading_rows=1,
         write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
     )
+
     with open(data_file_path, "rb") as data_file:
         if schema_file_path is None:
             fields = data_file.readline().decode().strip().split(",")
             # Assume all fields are strings and nullable
+            columns = [(field, "STRING") for field in fields]
             job_config.schema = [
                 bigquery.SchemaField(field, field_type="STRING") for field in fields
             ]
@@ -50,6 +72,7 @@ def load_table(
         else:
             with open(schema_file_path) as schema_file:
                 fields = json.load(schema_file)
+            columns = [(field["name"], field.get("type", "STRING")) for field in fields]
             job_config.schema = [
                 bigquery.SchemaField(
                     field["name"],
@@ -71,6 +94,45 @@ def load_table(
             table.description = description
             client.update_table(table, ["description"])
 
+    create_udf(data_file_path, udf_dir, columns)
+
+
+# Convert value to BigQuery literal value
+def get_literal_value(value, col_type):
+    col_type = col_type.lower()
+    if col_type in ["numeric", "int64", "float64", "boolean"]:
+        return value
+    value = value.replace("'", "\\'")
+    if col_type == "bytes":
+        return f"b'{value}'"
+    return f"'{value}'"
+
+
+def create_udf(data_file_path, udf_dir, columns):
+    _, table_id = parse_data_file_path(data_file_path)
+
+    col_names, col_types = zip(*columns)
+    schema_string = ', '.join(
+        [' '.join([col_name, col_type]) for col_name, col_type in columns]
+    )
+    udf_rows = []
+
+    with open(data_file_path) as data_file:
+        data_reader = csv.reader(data_file)
+        next(data_reader)
+        for row in data_reader:
+            current_udf_row = []
+            for value, col_type in zip(row, col_types):
+                current_udf_row.append(get_literal_value(value, col_type))
+            udf_rows.append("(" + ", ".join(current_udf_row) + ")")
+
+    udf_rows_string = ",\n    ".join(udf_rows)
+
+    with open(os.path.join(udf_dir, f"static_{table_id}.sql",), "w") as udf_file:
+        udf_file.write(UDF_TEMPLATE.format(
+            table_name=table_id, schema=schema_string, rows=udf_rows_string
+        ))
+
 
 def main():
     args = parse_args()
@@ -90,6 +152,7 @@ def main():
                 )
                 load_table(
                     os.path.join(root, filename),
+                    args.udf_dir,
                     schema_file_path,
                     description_file_path,
                     args.project_id,
